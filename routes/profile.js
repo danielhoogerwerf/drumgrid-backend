@@ -58,16 +58,17 @@ router.post("/savepattern", (req, res) => {
 
   const patternName = req.body.name.replace(/^\s+/g, "").replace(/[^A-Za-z0-9_\-!\s]+/g, "_");
   const patternData = req.body.data;
-  console.log(patterName, patternData);
 
   Profile.create({
     name: patternName,
     data: patternData,
   })
     .then((result) => {
-      User.updateOne({ _id: req.user.id }, { $addToSet: { patterns: result.id } });
+      User.updateOne({ _id: req.user.id }, { $push: { patterns: result._id } })
+      .then(() => res.status(200).json({ message: "OK" }))
+      .catch(e => console.log(e))
     })
-    .then(() => res.status(200).json({ message: "OK" }))
+    
 
     // User.findOne({ _id: req.user.id })
     //   .populate("patterns")
