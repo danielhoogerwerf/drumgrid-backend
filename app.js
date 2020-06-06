@@ -13,7 +13,8 @@ const cors       = require("cors");
     
 
 mongoose
-  .connect(process.env.MONGODB_URL, {
+  // .connect(process.env.MONGODB_URL, {
+    .connect("mongodb://localhost/drumgrid-backend", {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true,
@@ -36,7 +37,6 @@ app.use(cors({
   credentials: true
 }))
 
-
 // Middleware Setup
 app.use(logger('dev'));
 app.use(bodyParser.json());
@@ -44,7 +44,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 // Express View engine setup
-
 app.use(require('node-sass-middleware')({
   src:  path.join(__dirname, 'public'),
   dest: path.join(__dirname, 'public'),
@@ -52,9 +51,8 @@ app.use(require('node-sass-middleware')({
 }));
       
 
-app.set('views', path.join(__dirname, 'views'));
+// app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(favicon(path.join(__dirname, 'public', 'images', 'favicon.ico')));
 
 
 // Enable authentication using session + passport
@@ -74,7 +72,9 @@ const index = require('./routes/index');
 app.use('/', index);
 
 const authRoutes = require('./routes/auth');
-app.use('/auth', authRoutes);
-      
+app.use('/api/auth', authRoutes);
+
+const profileRoutes = require("./routes/profile");
+app.use("/api/profile", profileRoutes);
 
 module.exports = app;
