@@ -1,5 +1,5 @@
 const express = require("express");
-const passport = require("passport");
+// const passport = require("passport");
 const router = express.Router();
 
 // Models
@@ -23,7 +23,7 @@ router.post("/changeusername", (req, res) => {
 
     User.updateOne({ _id: req.user.id }, { username })
       .then((result) => res.status(200).json(result))
-      .catch((e) => res.status(500).json({ message: `An error occured: ${e}` }));
+      .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
   });
 });
 
@@ -38,14 +38,30 @@ router.post("/changepassword", (req, res) => {
     return res.status(400).json({ message: "Password cannot be blank" });
   }
 
-  bcrypt.hash(password, 10).then((hash) => {
-    User.updateOne({ _id: req.user.id }, { password: hash })
-      .then(() => {
-        res.status(200).json({ message: "Password updated" });
-      })
-      .catch((err) => {
-        res.status(500).json({ message: `Something went wrong: ${err}` });
-      });
+  bcrypt
+    .hash(password, 10)
+    .then((hash) => {
+      User.updateOne({ _id: req.user.id }, { password: hash })
+        .then(() => {
+          res.status(200).json({ message: "Password updated" });
+        })
+        .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
+    })
+    .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
+});
+
+router.put("/updatepattern", (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(403).json({ message: "please authenticate" });
+    return;
+  }
+  const patternName = req.body.name.replace(/^\s+/g, "").replace(/[^A-Za-z0-9_\-!\s]+/g, "_");
+  const patternData = req.body.data;
+
+  Profile.findOne({ name: patternName }).then((foundPattern) => {
+    Profile.updateOne({ id: foundPattern._id }, { data: patternData })
+      .then(() => res.send(200).json({ message: "OK" }))
+      .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
   });
 });
 
@@ -65,50 +81,62 @@ router.post("/savepattern", (req, res) => {
   })
     .then((result) => {
       User.updateOne({ _id: req.user.id }, { $push: { patterns: result._id } })
-      .then(() => res.status(200).json({ message: "OK" }))
-      .catch(e => console.log(e))
+        .then(() => res.status(200).json({ message: "OK" }))
+        .catch((e) => console.log(e));
     })
-    
-
-    // User.findOne({ _id: req.user.id })
-    //   .populate("patterns")
-    //   .then((user) => {
-    //     res
-    //       .status(200)
-    //       .json(user)
-    //   if (user.data.)
-    //   Profile.create({
-    //     name: patternname,
-    //     data: patterndata,
-    //     owner: user.id
-    //   });
-    // })
-    // .then((result) => res.status(200).json(result))
-    .catch((e) => res.status(500).json({ message: `An error occured: ${e}` }));
+    .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
 });
-// });
+
+// GET - getpatterns
+router.get("/getpatterns", (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(403).json({ message: "please authenticate" });
+    return;
+  }
+  User.findOne({ _id: req.user.id })
+    .populate("patterns")
+    .then((result) => {
+      const [...sendData] = result.patterns.map((element) => {
+        return { name: element.name, id: element._id };
+      });
+      res.status(200).json(sendData);
+    })
+    .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
+});
 
 // GET - loadpattern
-
-// POST - delpattern
-router.post("/delpattern", (req, res) => {
+router.get("/loadpattern/:id", (req, res) => {
   if (!req.isAuthenticated()) {
     res.status(403).json({ message: "please authenticate" });
     return;
   }
 
-  const patternname = req.body.name;
-  console.log(patternname);
-
   User.findOne({ _id: req.user.id })
-    .popupate("patterns")
+    .populate("patterns")
     .then((result) => {
-      console.log(result);
-    });
+      const data = result.patterns.map((element) => {
+        return element._id == req.params.id ? element : null;
+      });
+      const dataIndex = data.findIndex((find) => find);
+      dataIndex >= 0 ? res.status(200).json(data[dataIndex]) : res.status(200).json({ error: "No data found" });
+    })
+    .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
+});
 
-  // Profile.deleteOne({ _id: req.user.id }, { name: patternname, data: patterndata, owner: req.user.id })
-  //   .then((result) => res.status(200).json(result))
-  //   .catch((e) => res.status(500).json({ message: `An error occured: ${e}` }));
+// POST - delpattern
+router.post("/delpattern/:id", (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(403).json({ message: "please authenticate" });
+    return;
+  }
+
+  Profile.deleteOne({ _id: req.params.id })
+    .then(() => {
+      User.updateOne({ _id: req.user.id }, { $pull: { patterns: req.params.id } })
+        .then(() => res.send(200).json({ message: "OK" }))
+        .catch((e) => res.send(500).json({ error: `an error occured: ${e}` }));
+    })
+    .catch((e) => res.send(500).json({ error: `an error occured: ${e}` }));
 });
 
 module.exports = router;

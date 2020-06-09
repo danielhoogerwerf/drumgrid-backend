@@ -25,7 +25,7 @@ router.post("/login", (req, res, next) => {
 });
 
 router.post("/signup", (req, res, next) => {
-  const username = req.body.username;
+  const username = req.body.username.replace(/^\s+/g, "").replace(/[^A-Za-z0-9_\s]+/g, "_");
   const password = req.body.password;
 
   console.log(username);
@@ -34,24 +34,27 @@ router.post("/signup", (req, res, next) => {
     return res.status(400).json({ message: "Please provide a username and a password" });
   }
 
-  User.findOne({ username }).then((user) => {
-    if (user !== null) {
-      return res.status(409).json({ message: "The username already exists" });
-    }
+  User.findOne({ username })
+    .then((user) => {
+      if (user !== null) {
+        return res.status(409).json({ message: "The username already exists" });
+      }
 
-    bcrypt.hash(password, 10).then((hash) => {
-      User.create({
-        username: username,
-        password: hash,
-      })
-        .then((user) => {
-          res.status(200).json({ user });
+      bcrypt
+        .hash(password, 10)
+        .then((hash) => {
+          User.create({
+            username: username,
+            password: hash,
+          })
+            .then((user) => {
+              res.status(200).json({ user });
+            })
+            .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
         })
-        .catch((err) => {
-          res.status(500).json({ message: `Something went wrong: ${err}` });
-        });
-    });
-  });
+        .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
+    })
+    .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
 });
 
 router.get("/isloggedin", (req, res) => {
