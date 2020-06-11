@@ -59,7 +59,7 @@ router.post("/signup", (req, res, next) => {
 
 router.get("/isloggedin", (req, res) => {
   if (!req.isAuthenticated()) {
-    return res.status(403).json({ message: "Please authenticate" });
+    return res.status(200).json({ message: "Please authenticate" });
   }
   res.status(200).json(req.user);
 });
