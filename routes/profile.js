@@ -1,5 +1,4 @@
 const express = require("express");
-// const passport = require("passport");
 const router = express.Router();
 
 // Models
@@ -73,16 +72,32 @@ router.post("/savepattern", (req, res) => {
   const patternName = req.body.name.replace(/^\s+/g, "").replace(/[^A-Za-z0-9_\-!\s]+/g, "_");
   const patternData = req.body.data;
 
-  Profile.create({
-    name: patternName,
-    data: patternData,
-  })
-    .then((result) => {
-      User.updateOne({ _id: req.user.id }, { $push: { patterns: result._id } })
-        .then(() => res.status(200).json({ message: "OK" }))
-        .catch((e) => console.log(e));
-    })
-    .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
+  // Check if more than 5 patterns exists and if so refuse to save
+  User.aggregate([
+    {
+      $unwind: {
+        path: "$patterns",
+      },
+    },
+    {
+      $count: "patterns",
+    },
+  ]).then((amount) => {
+    if (amount[0].patterns >= 5) {
+      res.status(409).json({ error: "too many patterns already stored" });
+    } else {
+      Profile.create({
+        name: patternName,
+        data: patternData,
+      })
+        .then((result) => {
+          User.updateOne({ _id: req.user.id }, { $push: { patterns: result._id } })
+            .then(() => res.status(200).json({ message: "OK" }))
+            .catch((e) => console.log(e));
+        })
+        .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
+    }
+  });
 });
 
 // GET - getpatterns
