@@ -50,19 +50,17 @@ router.post("/changepassword", (req, res) => {
     .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
 });
 
-router.put("/updatepattern", (req, res) => {
+// PUT - updatepattern
+router.put("/updatepattern/:id", (req, res) => {
   if (!req.isAuthenticated()) {
     res.status(403).json({ message: "please authenticate" });
     return;
   }
-  const patternName = req.body.name.replace(/^\s+/g, "").replace(/[^A-Za-z0-9_\-!\s]+/g, "_");
+  // const patternData = req.body.data.replace(/^\s+/g, "").replace(/[^A-Za-z0-9_\-!\s]+/g, "_");
   const patternData = req.body.data;
-
-  Profile.findOne({ name: patternName }).then((foundPattern) => {
-    Profile.updateOne({ id: foundPattern._id }, { data: patternData })
-      .then(() => res.send(200).json({ message: "OK" }))
-      .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
-  });
+  Profile.updateOne({ _id: req.params.id }, { $set: { data: patternData } })
+    .then(() => res.status(200).json({ message: "OK" }))
+    .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
 });
 
 // POST - savepattern
