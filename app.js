@@ -34,7 +34,7 @@ const app = express();
 // CORS configuration
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://www.drumgrid.nl:3000", "https://www.drumgrid.nl:3000"],
+    origin: ["http://localhost:3000", "http://www.drumgrid.nl", "https://www.drumgrid.nl"],
     credentials: true,
   })
 );
