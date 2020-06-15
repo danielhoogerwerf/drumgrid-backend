@@ -1,4 +1,5 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const router = express.Router();
 
 // Models
@@ -72,18 +73,27 @@ router.post("/savepattern", (req, res) => {
   const patternName = req.body.name.replace(/^\s+/g, "").replace(/[^A-Za-z0-9_\-!\s]+/g, "_");
   const patternData = req.body.data;
 
+  const o_id = mongoose.Types.ObjectId(req.user.id);
+
   // Check if more than 5 patterns exists and if so refuse to save
   User.aggregate([
-    {
-      $unwind: {
-        path: "$patterns",
+    [
+      {
+        $match: {
+          _id: o_id,
+        },
       },
-    },
-    {
-      $count: "patterns",
-    },
+      {
+        $unwind: {
+          path: "$patterns",
+        },
+      },
+      {
+        $count: "patterns",
+      },
+    ],
   ]).then((amount) => {
-    if (amount[0].patterns >= 5) {
+    if (amount.length > 0 && amount[0].patterns >= 5) {
       res.status(409).json({ error: "too many patterns already stored" });
     } else {
       Profile.create({
@@ -109,10 +119,14 @@ router.get("/getpatterns", (req, res) => {
   User.findOne({ _id: req.user.id })
     .populate("patterns")
     .then((result) => {
-      const [...sendData] = result.patterns.map((element) => {
-        return { name: element.name, id: element._id };
-      });
-      res.status(200).json(sendData);
+      if (result.patterns) {
+        const [...sendData] = result.patterns.map((element) => {
+          return { name: element.name, id: element._id };
+        });
+        res.status(200).json(sendData);
+      } else {
+        res.status(200).json();
+      }
     })
     .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
 });
