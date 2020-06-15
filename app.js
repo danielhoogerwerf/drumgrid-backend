@@ -13,14 +13,14 @@ const cors       = require("cors");
     
 
 mongoose
-  // .connect(process.env.MONGODB_URL, {
-    .connect("mongodb://localhost/drumgrid-backend", {
+  .connect(process.env.MONGODB_URL, {
+    // .connect("mongodb://localhost/drumgrid-backend", {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true,
   })
   .then((x) => {
-    `Connected to Mongo! Host: ${x.connections[0].host}, Port: ${x.connections[0].port}, Database name: "${x.connections[0].name}"`;
+    console.log(`Connected to Mongo! Host: ${x.connections[0].host}, Port: ${x.connections[0].port}, Database name: "${x.connections[0].name}"`);
   })
   .catch((err) => {
     console.error("Error connecting to mongo", err);
@@ -32,10 +32,12 @@ const debug = require('debug')(`${app_name}:${path.basename(__filename).split('.
 const app = express();
 
 // CORS configuration
-app.use(cors({
-  origin: ['http://localhost:3000', 'http://drumgrid.nl:3000'],
-  credentials: true
-}))
+app.use(
+  cors({
+    origin: ["http://localhost:3000", "http://www.drumgrid.nl:3000", "https://www.drumgrid.nl:3000"],
+    credentials: true,
+  })
+);
 
 // Middleware Setup
 app.use(logger('dev'));
