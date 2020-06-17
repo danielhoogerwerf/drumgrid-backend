@@ -160,10 +160,10 @@ router.post("/delpattern/:id", (req, res) => {
   Profile.deleteOne({ _id: req.params.id })
     .then(() => {
       User.updateOne({ _id: req.user.id }, { $pull: { patterns: req.params.id } })
-        .then(() => res.send(200).json({ message: "OK" }))
-        .catch((e) => res.send(500).json({ error: `an error occured: ${e}` }));
+        .then(() => res.status(200).json({ message: "OK" }))
+        .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
     })
-    .catch((e) => res.send(500).json({ error: `an error occured: ${e}` }));
+    .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
 });
 
 module.exports = router;
