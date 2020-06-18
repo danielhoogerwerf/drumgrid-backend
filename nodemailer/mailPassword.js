@@ -44,19 +44,20 @@ const mailPassword = (userID, email) => {
           html: mailHtml,
         };
 
-        return transporter.sendMail(mailOptions, function (err, info) {
-          console.log("sending mail");
-          if (err) {
-            console.log(err);
-            return err;
-          } else {
-            //console.log(info);
-            return info;
-          }
+        const sendMyMail = new Promise((resolve, reject) => {
+          // Need to wrap this function in a promise to return it's values properly.
+          transporter.sendMail(mailOptions, function (err, info) {
+            console.log("sending mail");
+            if (err) {
+              reject(err);
+            } else {
+              resolve(info);
+            }
+          });
         });
+        return sendMyMail;
       })
       .catch((err) => err);
-
     return performUpdate;
   });
   return sendMail;

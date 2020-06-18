@@ -90,15 +90,18 @@ router.post("/forgotpassword", (req, res, next) => {
       if (user) {
         mailPassword(user._id, user.email)
           .then((result) => {
-            console.log(result)
-            res.status(200).json({ message: "OK" });
+            if (!result.responseCode) {
+              res.status(200).json({ message: "OK" });
+            } else {
+              res.status(500).json({ error: `an error occured: ${result.response}` });
+            }
           })
           .catch((err) => res.status(500).json({ error: `an error occured: ${err}` }));
       } else {
         res.status(400).json({ error: "Email address not found" });
       }
     })
-  .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
+    .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
 });
 
 router.get("/isloggedin", (req, res) => {
