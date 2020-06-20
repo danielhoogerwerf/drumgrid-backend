@@ -15,7 +15,7 @@ router.post("/login", (req, res, next) => {
       return next(err);
     }
     if (!user) {
-      return res.status(401).json({ message: "Username or password incorrect" });
+      return res.status(401).json({ message: info.message });
     }
     req.logIn(user, function (err) {
       if (err) {
