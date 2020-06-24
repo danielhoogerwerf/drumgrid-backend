@@ -27,28 +27,33 @@ router.post("/updateprofile", (req, res) => {
   const email = req.body.email.toLowerCase().replace(/[^A-Za-z0-9_\-@\.!]+/g, "");
   const password = req.body.password;
 
-  User.findOne({ email }).then(() => {
-    if (password) {
-      bcrypt
-        .hash(password, 10)
-        .then((hash) => {
-          console.log(hash);
-          User.updateOne({ _id: req.user.id }, { email, password: hash })
-            .then(() => {
-              res.status(200).json({ message: "Profile updated" });
-            })
-            .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
-        })
-        .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
-    } else {
-      User.updateOne({ _id: req.user.id }, { email })
-        .then(() => {
-          console.log("email updated");
-          res.status(200).json({ message: "Email updated" });
-        })
-        .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
-    }
-  });
+  if (email !== req.user.email) {
+    User.findOne({ email }).then((exists) => {
+      if (exists) {
+        return res.status(200).json({ message: "Email address already exists" });
+      }
+    });
+  }
+
+  if (password) {
+    bcrypt
+      .hash(password, 10)
+      .then((hash) => {
+        console.log(hash);
+        User.updateOne({ _id: req.user.id }, { email, password: hash })
+          .then(() => {
+            res.status(200).json({ message: "Profile updated" });
+          })
+          .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
+      })
+      .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
+  } else {
+    User.updateOne({ _id: req.user.id }, { email })
+      .then(() => {
+        res.status(200).json({ message: "Email updated" });
+      })
+      .catch((e) => res.status(500).json({ error: `an error occured: ${e}` }));
+  }
 });
 
 // PUT - updatepattern
